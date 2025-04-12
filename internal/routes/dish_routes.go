@@ -6,10 +6,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupDishRoutes(app *fiber.App, dishHandler *handlers.DishHandler) {
+func SetupDishRoutes(app *fiber.App, h *handlers.DishHandler) {
 	dishesGroup := app.Group("/dishes")
-	dishesGroup.Get("", dishHandler.AllDishes)
-	dishesGroup.Get("/:restId", dishHandler.RestaurantDishes)
-	dishesGroup.Get("/:restId/:id", dishHandler.RestaurantDish)
-	dishesGroup.Post("", dishHandler.AddRestaurantDish)
+	dishesGroup.Get("", h.AllDishes)
+	dishesGroup.Get("/:restId", h.RestaurantDishes)
+	dishesGroup.Get("/:restId/:id", h.RestaurantDish)
+	dishesGroup.Post("", h.AddRestaurantDish)
+	dishesGroup.Delete("", h.RemoveRestaurantDish)
 }

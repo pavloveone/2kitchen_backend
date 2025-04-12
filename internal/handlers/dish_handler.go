@@ -65,7 +65,7 @@ func (h *DishHandler) RestaurantDish(c *fiber.Ctx) error {
 }
 
 func (h *DishHandler) AddRestaurantDish(c *fiber.Ctx) error {
-	req := models.CreateDish{}
+	req := models.ModificationDish{}
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request"})
 	}
@@ -74,4 +74,16 @@ func (h *DishHandler) AddRestaurantDish(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err})
 	}
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"id": dishId})
+}
+
+func (h *DishHandler) RemoveRestaurantDish(c *fiber.Ctx) error {
+	req := models.ModificationDish{}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request"})
+	}
+	err := h.service.RemoveDish(req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err})
+	}
+	return c.SendStatus(fiber.StatusOK)
 }

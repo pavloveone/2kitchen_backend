@@ -13,7 +13,8 @@ type Dish struct {
 	Restaurant  int     `json:"restaurant"`
 }
 
-type CreateDish struct {
+type ModificationDish struct {
+	ID          int     `json:"id"`
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`

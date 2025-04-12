@@ -42,7 +42,7 @@ func NewDishRepository(dbPath string) (*DishRepository, error) {
 }
 
 func (r *DishRepository) AllDishes() ([]models.Dish, error) {
-	query := "SELECT id, restaurant, name, description, price, image, protein, fat, carbs, calories FROM dishes"
+	query := `SELECT id, restaurant, name, description, price, image, protein, fat, carbs, calories FROM dishes`
 	rows, err := r.db.Query(query)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (r *DishRepository) AllDishes() ([]models.Dish, error) {
 }
 
 func (r *DishRepository) RestaurantDishes(restId int) ([]models.Dish, error) {
-	query := "SELECT id, restaurant, name, description, price, image, protein, fat, carbs, calories FROM dishes WHERE restaurant = ?"
+	query := `SELECT id, restaurant, name, description, price, image, protein, fat, carbs, calories FROM dishes WHERE restaurant = ?`
 	rows, err := r.db.Query(query, restId)
 	if err != nil {
 		fmt.Println("Error executing query:", err)
@@ -108,7 +108,7 @@ func (r *DishRepository) DishById(restId, dishId int) (models.Dish, error) {
 	return dish, nil
 }
 
-func (r *DishRepository) AddDish(newDish models.CreateDish) (int, error) {
+func (r *DishRepository) AddDish(newDish models.ModificationDish) (int, error) {
 	query := `
 		INSERT INTO dishes (restaurant, name, description, price, image, protein, fat, carbs, calories)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -124,4 +124,15 @@ func (r *DishRepository) AddDish(newDish models.CreateDish) (int, error) {
 	}
 
 	return int(lastInsertId), nil
+}
+
+func (r *DishRepository) RemoveDish(dish models.ModificationDish) error {
+	query := "DELETE FROM dishes WHERE restaurant = ? AND id = ?"
+
+	_, err := r.db.Exec(query, dish.Restaurant, dish.ID)
+	if err != nil {
+		return fmt.Errorf("failed to delete dish: %w", err)
+	}
+
+	return nil
 }

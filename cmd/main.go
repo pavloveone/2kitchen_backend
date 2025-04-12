@@ -12,10 +12,19 @@ import (
 
 func main() {
 	app := fiber.New()
-	repo, _ := repositories.NewDishRepository("dishes.db")
-	service := services.NewDishService(repo)
-	handler := handlers.NewDishHandler(service)
-	routes.SetupDishRoutes(app, handler)
+
+	// dishes
+	rDishes, _ := repositories.NewDishRepository("dishes.db")
+	sDishes := services.NewDishService(rDishes)
+	hDishes := handlers.NewDishHandler(sDishes)
+	routes.SetupDishRoutes(app, hDishes)
+
+	// orders
+	rOrders, _ := repositories.NewOrderRepository("orders.db")
+	sOrders := services.NewOrderService(rOrders)
+	hOrders := handlers.NewOrderHandler(sOrders)
+	routes.SetupOrderRoutes(app, hOrders)
+
 	port := "80"
 	logrus.WithFields(logrus.Fields{
 		"port": port,

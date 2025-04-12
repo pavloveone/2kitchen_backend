@@ -25,6 +25,10 @@ func (s *DishService) DishById(rest, dish int) (models.Dish, error) {
 	return s.repo.DishById(rest, dish)
 }
 
-func (s *DishService) AddDish(newDish models.CreateDish) (int, error) {
+func (s *DishService) AddDish(newDish models.ModificationDish) (int, error) {
 	return s.repo.AddDish(newDish)
+}
+
+func (s *DishService) RemoveDish(dish models.ModificationDish) error {
+	return s.repo.RemoveDish(dish)
 }
