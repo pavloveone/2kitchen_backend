@@ -75,7 +75,7 @@ func (r *DishRepository) RestaurantDishes(restId int) ([]models.Dish, error) {
 	}
 	defer rows.Close()
 
-	var dishes []models.Dish
+	dishes := make([]models.Dish, 0)
 	for rows.Next() {
 		var dish models.Dish
 		err := rows.Scan(&dish.ID, &dish.Restaurant, &dish.Name, &dish.Description, &dish.Price, &dish.Image, &dish.Protein, &dish.Fat, &dish.Carbs, &dish.Calories)

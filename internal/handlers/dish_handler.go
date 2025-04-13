@@ -18,13 +18,7 @@ func NewDishHandler(service *services.DishService) *DishHandler {
 
 func (h *DishHandler) AllDishes(c *fiber.Ctx) error {
 	dishes, _ := h.service.GetAllDishes()
-	var code int
-	if len(dishes) == 0 {
-		code = fiber.StatusNoContent
-	} else {
-		code = fiber.StatusOK
-	}
-	return c.Status(code).JSON(dishes)
+	return c.Status(fiber.StatusOK).JSON(dishes)
 }
 
 func (h *DishHandler) RestaurantDishes(c *fiber.Ctx) error {
@@ -37,13 +31,8 @@ func (h *DishHandler) RestaurantDishes(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "dishes not found"})
 	}
-	var code int
-	if len(dishes) == 0 {
-		code = fiber.StatusNoContent
-	} else {
-		code = fiber.StatusOK
-	}
-	return c.Status(code).JSON(dishes)
+
+	return c.Status(fiber.StatusOK).JSON(dishes)
 }
 
 func (h *DishHandler) RestaurantDish(c *fiber.Ctx) error {

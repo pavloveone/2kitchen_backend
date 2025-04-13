@@ -6,9 +6,12 @@ type OrderItem struct {
 }
 
 type Order struct {
-	ID         int    `json:"id"`
-	Restaurant int    `json:"restaurant"`
-	Items      string `json:"items"`
+	ID            int    `json:"id"`
+	Restaurant    int    `json:"restaurant"`
+	Items         string `json:"items"`
+	Status        string `json:"status"`
+	OrderTime     string `json:"order_time"`
+	PaymentStatus string `json:"payment_status"`
 }
 
 type CreateOrder struct {

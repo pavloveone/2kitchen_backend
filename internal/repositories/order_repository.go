@@ -23,7 +23,10 @@ func NewOrderRepository(dbPath string) (*OrderRepository, error) {
 	CREATE TABLE IF NOT EXISTS orders (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		restaurant INTEGER,
-		items TEXT
+		items TEXT,
+		order_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+		status TEXT DEFAULT 'pending',
+		payment_status TEXT DEFAULT 'unpaid'
 	);
 	`
 	_, err = db.Exec(createTableQuery)
@@ -35,17 +38,17 @@ func NewOrderRepository(dbPath string) (*OrderRepository, error) {
 }
 
 func (r *OrderRepository) AllOrders() ([]models.Order, error) {
-	query := `SELECT id, restaurant, items FROM orders`
+	query := `SELECT id, restaurant, items, status, order_time, payment_status FROM orders`
 	rows, err := r.db.Query(query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var orders []models.Order
+	orders := make([]models.Order, 0)
 	for rows.Next() {
 		var order models.Order
-		err := rows.Scan(&order.ID, &order.Restaurant, &order.Items)
+		err := rows.Scan(&order.ID, &order.Restaurant, &order.Items, &order.Status, &order.OrderTime, &order.PaymentStatus)
 		if err != nil {
 			return nil, err
 		}
