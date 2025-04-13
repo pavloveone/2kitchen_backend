@@ -14,13 +14,19 @@ func main() {
 	app := fiber.New()
 
 	// dishes
-	rDishes, _ := repositories.NewDishRepository("dishes.db")
+	rDishes, err := repositories.NewDishRepository("dishes.db")
+	if err != nil {
+		logrus.Fatal("Error initializing dishes repository:", err)
+	}
 	sDishes := services.NewDishService(rDishes)
 	hDishes := handlers.NewDishHandler(sDishes)
 	routes.SetupDishRoutes(app, hDishes)
 
 	// orders
-	rOrders, _ := repositories.NewOrderRepository("orders.db")
+	rOrders, err := repositories.NewOrderRepository("orders.db")
+	if err != nil {
+		logrus.Fatal("Error initializing orders repository:", err)
+	}
 	sOrders := services.NewOrderService(rOrders)
 	hOrders := handlers.NewOrderHandler(sOrders)
 	routes.SetupOrderRoutes(app, hOrders)
