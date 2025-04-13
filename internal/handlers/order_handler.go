@@ -17,13 +17,7 @@ func NewOrderHandler(service *services.OrderService) *OrderHandler {
 
 func (h *OrderHandler) AllOrders(c *fiber.Ctx) error {
 	orders, _ := h.service.AllOrders()
-	var code int
-	if len(orders) == 0 {
-		code = fiber.StatusNoContent
-	} else {
-		code = fiber.StatusOK
-	}
-	return c.Status(code).JSON(orders)
+	return c.Status(fiber.StatusOK).JSON(orders)
 }
 
 func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
