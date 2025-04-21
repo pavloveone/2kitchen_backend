@@ -1,15 +1,15 @@
-package services
+package orderservices
 
 import (
 	"2kitchen/internal/models"
-	"2kitchen/internal/repositories"
+	orderrepositories "2kitchen/internal/repositories/order"
 )
 
 type OrderService struct {
-	repo *repositories.OrderRepository
+	repo *orderrepositories.OrderRepository
 }
 
-func NewOrderService(repo *repositories.OrderRepository) *OrderService {
+func NewOrderService(repo *orderrepositories.OrderRepository) *OrderService {
 	return &OrderService{repo: repo}
 }
 

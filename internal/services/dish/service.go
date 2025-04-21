@@ -1,15 +1,15 @@
-package services
+package dishservices
 
 import (
 	"2kitchen/internal/models"
-	"2kitchen/internal/repositories"
+	dishrepositories "2kitchen/internal/repositories/dish"
 )
 
 type DishService struct {
-	repo *repositories.DishRepository
+	repo *dishrepositories.DishRepository
 }
 
-func NewDishService(repo *repositories.DishRepository) *DishService {
+func NewDishService(repo *dishrepositories.DishRepository) *DishService {
 	return &DishService{repo: repo}
 }
 

@@ -1,18 +1,18 @@
-package handlers
+package dishhandlers
 
 import (
 	"2kitchen/internal/models"
-	"2kitchen/internal/services"
+	dishservices "2kitchen/internal/services/dish"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type DishHandler struct {
-	service *services.DishService
+	service *dishservices.DishService
 }
 
-func NewDishHandler(service *services.DishService) *DishHandler {
+func NewDishHandler(service *dishservices.DishService) *DishHandler {
 	return &DishHandler{service: service}
 }
 

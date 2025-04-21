@@ -1,4 +1,4 @@
-package repositories
+package orderrepositories
 
 import (
 	"2kitchen/internal/models"

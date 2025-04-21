@@ -1,17 +1,17 @@
-package handlers
+package orderhandlers
 
 import (
 	"2kitchen/internal/models"
-	"2kitchen/internal/services"
+	orderservices "2kitchen/internal/services/order"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type OrderHandler struct {
-	service *services.OrderService
+	service *orderservices.OrderService
 }
 
-func NewOrderHandler(service *services.OrderService) *OrderHandler {
+func NewOrderHandler(service *orderservices.OrderService) *OrderHandler {
 	return &OrderHandler{service: service}
 }
 
