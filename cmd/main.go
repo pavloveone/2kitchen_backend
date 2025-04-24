@@ -3,12 +3,16 @@ package main
 import (
 	dishhandlers "2kitchen/internal/handlers/dish"
 	orderhandlers "2kitchen/internal/handlers/order"
+	userhandlers "2kitchen/internal/handlers/user"
 	dishrepositories "2kitchen/internal/repositories/dish"
 	orderrepositories "2kitchen/internal/repositories/order"
+	userrepositories "2kitchen/internal/repositories/user"
 	dishroutes "2kitchen/internal/routes/dish"
 	orderroutes "2kitchen/internal/routes/order"
+	userroutes "2kitchen/internal/routes/user"
 	dishservices "2kitchen/internal/services/dish"
 	orderservices "2kitchen/internal/services/order"
+	userservices "2kitchen/internal/services/user"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -41,6 +45,15 @@ func main() {
 	sOrders := orderservices.NewOrderService(rOrders)
 	hOrders := orderhandlers.NewOrderHandler(sOrders)
 	orderroutes.SetupOrderRoutes(app, hOrders)
+
+	// users
+	rUsers, err := userrepositories.NewUserRepository("users.db")
+	if err != nil {
+		logrus.Fatal("Error initializing users repository:", err)
+	}
+	sUsers := userservices.NewUserRepository(rUsers)
+	hUsers := userhandlers.NewUserHandler(sUsers)
+	userroutes.SetupRoutes(app, hUsers)
 
 	port := "8080"
 	logrus.WithFields(logrus.Fields{
