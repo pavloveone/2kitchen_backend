@@ -25,6 +25,6 @@ func (s *UserService) AddUser(newUser models.CreateUserRequest) (int, error) {
 	return s.repo.AddUser(newUser)
 }
 
-func (s *UserService) LogIn(loginUser models.LogInUser) (models.UserResponse, error) {
+func (s *UserService) LogIn(loginUser models.LogInUser) (models.LoginResponse, error) {
 	return s.repo.LogIn(loginUser)
 }

@@ -97,7 +97,7 @@ func (r *UserRepository) AddUser(newUser models.CreateUserRequest) (int, error) 
 	return int(lastInsertId), nil
 }
 
-func (r *UserRepository) LogIn(loginUser models.LogInUser) (models.UserResponse, error) {
+func (r *UserRepository) LogIn(loginUser models.LogInUser) (models.LoginResponse, error) {
 	query := `SELECT id, username, password, first_name, last_name, middle_name, email, created_on FROM users WHERE username = ?`
 	row := r.db.QueryRow(query, loginUser.Username)
 
@@ -106,12 +106,20 @@ func (r *UserRepository) LogIn(loginUser models.LogInUser) (models.UserResponse,
 	err := row.Scan(&user.ID, &user.Username, &hashedPass, &user.FirstName, &user.LastName, &user.MiddleName, &user.Email, &user.CreatedOn)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return models.UserResponse{}, errors.New("user not found")
+			return models.LoginResponse{}, errors.New("user not found")
 		}
-		return models.UserResponse{}, err
+		return models.LoginResponse{}, err
 	}
 	if ok := auth.CheckPasswordHash(loginUser.Password, hashedPass); !ok {
-		return models.UserResponse{}, errors.New("an error occurred while checking password")
+		return models.LoginResponse{}, errors.New("an error occurred while checking password")
 	}
-	return user, nil
+	access, refresh, err := auth.GenerateTokens(user.ID)
+	if err != nil {
+		return models.LoginResponse{}, nil
+	}
+	return models.LoginResponse{
+		User:         user,
+		AccessToken:  access,
+		RefreshToken: refresh,
+	}, nil
 }

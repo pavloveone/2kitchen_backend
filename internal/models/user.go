@@ -34,3 +34,9 @@ type LogInUser struct {
 	Username string `json:"username" validate:"required,min=3,max=32"`
 	Password string `json:"password" validate:"required,min=8,max=64"`
 }
+
+type LoginResponse struct {
+	User         UserResponse `json:"user"`
+	AccessToken  string       `json:"access_token"`
+	RefreshToken string       `json:"refresh_token"`
+}
