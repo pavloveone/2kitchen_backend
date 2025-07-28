@@ -6,41 +6,65 @@ import (
 	dishrepositories "2kitchen/internal/repositories/dish"
 	dishroutes "2kitchen/internal/routes/dish"
 	dishservices "2kitchen/internal/services/dish"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestApp() *fiber.App {
-	db, err := sqlx.Open("sqlite3", ":memory:")
-	if err != nil {
-		log.Fatal("Error initializing in-memory DB:", err)
-	}
-	defer db.Close()
+var testDB *pgxpool.Pool
+var ctx = context.Background()
 
-	repo, err := dishrepositories.NewDishRepository(":memory:")
+func TestMain(m *testing.M) {
+	var err error
+
+	dsn := os.Getenv("TEST_DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("TEST_DATABASE_URL not set")
+	}
+
+	testDB, err = pgxpool.New(ctx, dsn)
+	if err != nil {
+		log.Fatalf("Unable to connect to test DB: %v", err)
+	}
+
+	_, err = testDB.Exec(ctx, `TRUNCATE TABLE dishes RESTART IDENTITY CASCADE`)
+	if err != nil {
+		log.Fatalf("Failed to truncate tables: %v", err)
+	}
+
+	code := m.Run()
+
+	testDB.Close()
+	os.Exit(code)
+}
+
+func setupTestApp() *fiber.App {
+
+	repo, err := dishrepositories.NewDishRepository(ctx, testDB)
 	if err != nil {
 		log.Fatal("Error initializing dishes repository:", err)
 	}
 
 	service := dishservices.NewDishService(repo)
-	handler := dishhandlers.NewDishHandler(service)
+	handler := dishhandlers.NewDishHandler(service, ctx)
 
 	app := fiber.New()
 	dishroutes.SetupDishRoutes(app, handler)
 
-	addTestDishes(repo)
+	addTestDishes(ctx, repo)
 
 	return app
 }
 
-func addTestDishes(repo *dishrepositories.DishRepository) {
+func addTestDishes(ctx context.Context, repo *dishrepositories.DishRepository) {
 	dishes := []models.ModificationDish{
 		{
 			ID:          1,
@@ -67,7 +91,7 @@ func addTestDishes(repo *dishrepositories.DishRepository) {
 	}
 
 	for _, dish := range dishes {
-		if _, err := repo.AddDish(dish); err != nil {
+		if _, err := repo.AddDish(ctx, dish); err != nil {
 			log.Fatal("Error adding test dishes:", err)
 		}
 	}

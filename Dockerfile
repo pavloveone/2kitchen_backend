@@ -1,42 +1,34 @@
 # Build stage
 FROM golang:1.23-alpine AS builder
 
-# Install necessary dependencies for building the Go binary and SQLite
-RUN apk add --no-cache gcc musl-dev sqlite-dev
+# Установка зависимостей для сборки Go-приложения
+RUN apk add --no-cache git
 
-# Set the working directory in the container
+# Установка рабочей директории
 WORKDIR /app
 
-# Copy go.mod and go.sum for dependency management
+# Копируем файлы зависимостей
 COPY go.mod go.sum ./
-
-# Download Go dependencies
 RUN go mod download
 
-# Copy the .env file from the root of the project
-COPY .env .env
-
-# Copy the rest of the source code (including main.go from ./cmd)
+# Копируем исходный код
 COPY . .
 
-# Build the Go application with cgo enabled for SQLite support
-RUN CGO_ENABLED=1 GOOS=linux go build -o 2kitchen ./cmd/main.go
+# Сборка приложения (без CGO, так как Postgres через pgx)
+RUN go build -o 2kitchen ./cmd/main.go
 
-# Verify that the binary exists in the builder stage
-RUN ls -l /app
-
-# Final stage: Use Alpine for the minimal container with dependencies
+# Final stage (чистый рантайм)
 FROM alpine:3.18
 
-# Install runtime dependencies for SQLite
-RUN apk add --no-cache sqlite-libs
+# Установка минимальных зависимостей
+RUN apk add --no-cache ca-certificates
 
-# Copy the compiled binary and environment file from the builder stage
+# Копируем бинарник и env-файл
 COPY --from=builder /app/2kitchen /2kitchen
 COPY --from=builder /app/.env /.env
 
-# Verify that the binary exists in the final container image
-RUN ls -l /2kitchen
+# Открываем порт (если нужно)
+EXPOSE 8080
 
-# Set the entry point to the Go binary
+# Точка входа
 CMD ["/2kitchen"]

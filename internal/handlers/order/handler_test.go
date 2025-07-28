@@ -7,41 +7,59 @@ import (
 	orderroutes "2kitchen/internal/routes/order"
 	orderservices "2kitchen/internal/services/order"
 	"bytes"
+	"context"
 	"encoding/json"
 	"log"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestApp() *fiber.App {
-	// Создаем SQLite в памяти
-	db, err := sqlx.Open("sqlite3", ":memory:")
-	if err != nil {
-		log.Fatal("Error initializing in-memory DB:", err)
-	}
-	defer db.Close()
+var testDB *pgxpool.Pool
+var ctx = context.Background()
 
-	// Создаём репозиторий с этим db
-	repo, err := orderrepositories.NewOrderRepository(":memory:")
+func TestMain(m *testing.M) {
+	var err error
+
+	dsn := os.Getenv("TEST_DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("TEST_DATABASE_URL not set")
+	}
+
+	testDB, err = pgxpool.New(ctx, dsn)
+	if err != nil {
+		log.Fatalf("Unable to connect to test DB: %v", err)
+	}
+
+	_, err = testDB.Exec(ctx, `TRUNCATE TABLE orders RESTART IDENTITY CASCADE`)
+	if err != nil {
+		log.Fatalf("Failed to truncate tables: %v", err)
+	}
+
+	code := m.Run()
+
+	testDB.Close()
+	os.Exit(code)
+}
+
+func setupTestApp() *fiber.App {
+
+	repo, err := orderrepositories.NewOrderRepository(ctx, testDB)
 	if err != nil {
 		log.Fatal("Error initializing orders repository:", err)
 	}
 
-	// Создаём сервис с репозиторием
 	service := orderservices.NewOrderService(repo)
 
-	// Создаём хэндлер с сервисом
-	handler := orderhandler.NewOrderHandler(service)
+	handler := orderhandler.NewOrderHandler(service, ctx)
 
-	// Настроим маршруты
 	app := fiber.New()
 	orderroutes.SetupOrderRoutes(app, handler)
 
-	// Добавим тестовые данные в базу
 	addTestOrders(repo)
 
 	return app
@@ -54,7 +72,7 @@ func addTestOrders(repo *orderrepositories.OrderRepository) {
 	}
 
 	for _, order := range orders {
-		if _, err := repo.CreateOrder(order); err != nil {
+		if _, err := repo.CreateOrder(ctx, order); err != nil {
 			log.Fatal("Error adding test orders:", err)
 		}
 	}

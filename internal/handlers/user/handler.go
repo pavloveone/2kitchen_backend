@@ -3,6 +3,7 @@ package userhandlers
 import (
 	"2kitchen/internal/models"
 	userservices "2kitchen/internal/services/user"
+	"context"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,14 +11,15 @@ import (
 
 type UserHander struct {
 	service *userservices.UserService
+	ctx     context.Context
 }
 
-func NewUserHandler(service *userservices.UserService) *UserHander {
-	return &UserHander{service: service}
+func NewUserHandler(service *userservices.UserService, ctx context.Context) *UserHander {
+	return &UserHander{service: service, ctx: ctx}
 }
 
 func (h *UserHander) GetAllUsers(c *fiber.Ctx) error {
-	users, err := h.service.AllUsers()
+	users, err := h.service.AllUsers(h.ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "An error occurred while loading users"})
 	}
@@ -30,7 +32,7 @@ func (h *UserHander) GetUserById(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Invalid user id"})
 	}
-	user, err := h.service.UserById(id)
+	user, err := h.service.UserById(h.ctx, id)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "User not found"})
 	}
@@ -42,7 +44,7 @@ func (h *UserHander) AddUser(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "invalid request"})
 	}
-	id, err := h.service.AddUser(req)
+	id, err := h.service.AddUser(h.ctx, req)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err})
 	}
@@ -54,7 +56,7 @@ func (h *UserHander) LogIn(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "invalid request"})
 	}
-	user, err := h.service.LogIn(req)
+	user, err := h.service.LogIn(h.ctx, req)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "user does not exist"})
 	}

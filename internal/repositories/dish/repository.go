@@ -2,38 +2,34 @@ package dishrepositories
 
 import (
 	"2kitchen/internal/models"
-	"database/sql"
+	"context"
 	"errors"
 	"fmt"
 
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DishRepository struct {
-	db *sql.DB
+	db *pgxpool.Pool
 }
 
-func NewDishRepository(dbPath string) (*DishRepository, error) {
-	db, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		return nil, err
-	}
-
+func NewDishRepository(ctx context.Context, db *pgxpool.Pool) (*DishRepository, error) {
 	createTableQuery := `
 	CREATE TABLE IF NOT EXISTS dishes (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		id SERIAL PRIMARY KEY, 
 		restaurant INTEGER,
 		name TEXT,
 		description TEXT,
-		price REAL,
+		price DOUBLE PRECISION,
 		image TEXT,
-		protein REAL,
-		fat REAL,
-		carbs REAL,
-		calories REAL
+		protein DOUBLE PRECISION,
+		fat DOUBLE PRECISION,
+		carbs DOUBLE PRECISION,
+		calories DOUBLE PRECISION
 	);
 	`
-	_, err = db.Exec(createTableQuery)
+	_, err := db.Exec(ctx, createTableQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -41,9 +37,9 @@ func NewDishRepository(dbPath string) (*DishRepository, error) {
 	return &DishRepository{db: db}, nil
 }
 
-func (r *DishRepository) AllDishes() ([]models.Dish, error) {
+func (r *DishRepository) AllDishes(ctx context.Context) ([]models.Dish, error) {
 	query := `SELECT id, restaurant, name, description, price, image, protein, fat, carbs, calories FROM dishes`
-	rows, err := r.db.Query(query)
+	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -66,9 +62,9 @@ func (r *DishRepository) AllDishes() ([]models.Dish, error) {
 	return dishes, nil
 }
 
-func (r *DishRepository) RestaurantDishes(restId int) ([]models.Dish, error) {
-	query := `SELECT id, restaurant, name, description, price, image, protein, fat, carbs, calories FROM dishes WHERE restaurant = ?`
-	rows, err := r.db.Query(query, restId)
+func (r *DishRepository) RestaurantDishes(ctx context.Context, restId int) ([]models.Dish, error) {
+	query := `SELECT id, restaurant, name, description, price, image, protein, fat, carbs, calories FROM dishes WHERE restaurant = $1`
+	rows, err := r.db.Query(ctx, query, restId)
 	if err != nil {
 		fmt.Println("Error executing query:", err)
 		return nil, err
@@ -92,14 +88,14 @@ func (r *DishRepository) RestaurantDishes(restId int) ([]models.Dish, error) {
 	return dishes, nil
 }
 
-func (r *DishRepository) DishById(restId, dishId int) (models.Dish, error) {
-	query := "SELECT id, restaurant, name, description, price, image, protein, fat, carbs, calories FROM dishes WHERE restaurant = ? AND id = ?"
-	row := r.db.QueryRow(query, restId, dishId)
+func (r *DishRepository) DishById(ctx context.Context, restId, dishId int) (models.Dish, error) {
+	query := "SELECT id, restaurant, name, description, price, image, protein, fat, carbs, calories FROM dishes WHERE restaurant = $1 AND id = $2"
+	row := r.db.QueryRow(ctx, query, restId, dishId)
 
 	var dish models.Dish
-	err := row.Scan(&dish.ID, &dish.Name, &dish.Description, &dish.Price, &dish.Image, &dish.Protein, &dish.Fat, &dish.Carbs, &dish.Calories)
+	err := row.Scan(&dish.ID, &dish.Restaurant, &dish.Name, &dish.Description, &dish.Price, &dish.Image, &dish.Protein, &dish.Fat, &dish.Carbs, &dish.Calories)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return models.Dish{}, errors.New("dish not found")
 		}
 		return models.Dish{}, err
@@ -108,28 +104,37 @@ func (r *DishRepository) DishById(restId, dishId int) (models.Dish, error) {
 	return dish, nil
 }
 
-func (r *DishRepository) AddDish(newDish models.ModificationDish) (int, error) {
+func (r *DishRepository) AddDish(ctx context.Context, newDish models.ModificationDish) (int, error) {
 	query := `
 		INSERT INTO dishes (restaurant, name, description, price, image, protein, fat, carbs, calories)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id
 	`
-	result, err := r.db.Exec(query, newDish.Restaurant, newDish.Name, newDish.Description, newDish.Price, newDish.Image, newDish.Protein, newDish.Fat, newDish.Carbs, newDish.Calories)
+
+	var id int
+	err := r.db.QueryRow(ctx, query,
+		newDish.Restaurant,
+		newDish.Name,
+		newDish.Description,
+		newDish.Price,
+		newDish.Image,
+		newDish.Protein,
+		newDish.Fat,
+		newDish.Carbs,
+		newDish.Calories,
+	).Scan(&id)
+
 	if err != nil {
 		return 0, err
 	}
 
-	lastInsertId, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return int(lastInsertId), nil
+	return id, nil
 }
 
-func (r *DishRepository) RemoveDish(dish models.ModificationDish) error {
-	query := "DELETE FROM dishes WHERE restaurant = ? AND id = ?"
+func (r *DishRepository) RemoveDish(ctx context.Context, dish models.ModificationDish) error {
+	query := "DELETE FROM dishes WHERE restaurant = $1 AND id = $2"
 
-	_, err := r.db.Exec(query, dish.Restaurant, dish.ID)
+	_, err := r.db.Exec(ctx, query, dish.Restaurant, dish.ID)
 	if err != nil {
 		return fmt.Errorf("failed to delete dish: %w", err)
 	}
