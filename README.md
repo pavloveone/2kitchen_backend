@@ -84,3 +84,10 @@ DATABASE_URL=postgres://kitchen_user:kitchen_pass@db:5432/kitchen_db
 - [ ] Connect user service to frontend
 - [ ] Add Swagger documentation
 - [ ] Add integration tests
+
+---
+
+## 🧑‍💻 Author
+
+Alexander Pavlov  
+[LinkedIn](https://linkedin.com/in/alexander-pavlov-877a422bb/)
